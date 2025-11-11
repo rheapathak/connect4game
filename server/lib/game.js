@@ -1,103 +1,62 @@
-// server/lib/game.js
-class Game {
+class Connect4 {
     constructor(rows = 6, cols = 7) {
       this.rows = rows;
       this.cols = cols;
-      this.reset();
+      this.board = Array.from({ length: rows }, () => Array(cols).fill(null));
     }
   
-    reset() {
-      // board[row][col] where row 0 is top. We'll place discs from bottom.
-      this.board = Array.from({ length: this.rows }, () => Array(this.cols).fill(null));
-      this.currentPlayerIndex = 0; // 0 or 1
-      this.status = 'playing'; // playing | finished
-      this.winner = null; // 0 or 1 or null
-      this.moves = 0;
-    }
-  
-    getBoard() {
-      return this.board;
-    }
-  
-    // drop a disc for playerIndex into column
-    play(playerIndex, column) {
-      if (this.status !== 'playing') {
-        return { ok: false, message: 'Game already finished' };
-      }
-      if (playerIndex !== this.currentPlayerIndex) {
-        return { ok: false, message: 'Not your turn' };
-      }
-      if (typeof column !== 'number' || column < 0 || column >= this.cols) {
-        return { ok: false, message: 'Invalid column' };
-      }
-  
-      // find lowest empty row in column
-      let placedRow = -1;
-      for (let r = this.rows - 1; r >= 0; r--) {
-        if (this.board[r][column] === null) {
-          this.board[r][column] = playerIndex;
-          placedRow = r;
-          break;
+    dropPiece(col, player) {
+      for (let row = this.rows - 1; row >= 0; row--) {
+        if (this.board[row][col] === null) {
+          this.board[row][col] = player;
+          return row;
         }
       }
-      if (placedRow === -1) {
-        return { ok: false, message: 'Column is full' };
-      }
-  
-      this.moves += 1;
-  
-      // check win
-      if (this.checkWin(placedRow, column, playerIndex)) {
-        this.status = 'finished';
-        this.winner = playerIndex;
-        return { ok: true, message: 'win' };
-      }
-  
-      // check draw
-      if (this.moves >= this.rows * this.cols) {
-        this.status = 'finished';
-        this.winner = null;
-        return { ok: true, message: 'draw' };
-      }
-  
-      // else change turn
-      this.currentPlayerIndex = 1 - this.currentPlayerIndex;
-      return { ok: true, message: 'accepted' };
+      return -1; // column full
     }
   
-    // check 4-in-a-row using deltas
-    checkWin(r, c, player) {
+    checkWin(row, col, player) {
+      if (row < 0 || col < 0) return false;
       const directions = [
-        { dr: 0, dc: 1 },  // horizontal
-        { dr: 1, dc: 0 },  // vertical
-        { dr: 1, dc: 1 },  // diagonal down-right
-        { dr: 1, dc: -1 }  // diagonal down-left
+        [0, 1],   // → Horizontal
+        [1, 0],   // ↓ Vertical
+        [1, 1],   // ↘ Diagonal
+        [1, -1],  // ↙ Diagonal
       ];
-      for (const dir of directions) {
+  
+      const inBounds = (r, c) => r >= 0 && r < this.rows && c >= 0 && c < this.cols;
+  
+      for (const [dr, dc] of directions) {
         let count = 1;
-        // forward
-        count += this.countDirection(r, c, dir.dr, dir.dc, player);
-        // backward
-        count += this.countDirection(r, c, -dir.dr, -dir.dc, player);
+  
+        // forward direction
+        let r = row + dr;
+        let c = col + dc;
+        while (inBounds(r, c) && this.board[r][c] === player) {
+          count++;
+          r += dr;
+          c += dc;
+        }
+  
+        // backward direction
+        r = row - dr;
+        c = col - dc;
+        while (inBounds(r, c) && this.board[r][c] === player) {
+          count++;
+          r -= dr;
+          c -= dc;
+        }
+  
         if (count >= 4) return true;
       }
+  
       return false;
     }
   
-    countDirection(r, c, dr, dc, player) {
-      let rr = r + dr;
-      let cc = c + dc;
-      let cnt = 0;
-      while (rr >= 0 && rr < this.rows && cc >= 0 && cc < this.cols) {
-        if (this.board[rr][cc] === player) {
-          cnt++;
-          rr += dr;
-          cc += dc;
-        } else break;
-      }
-      return cnt;
+    checkDraw() {
+      return this.board.every(row => row.every(cell => cell !== null));
     }
   }
   
-  module.exports = Game;
+  module.exports = Connect4;
   

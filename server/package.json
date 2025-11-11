@@ -1,0 +1,21 @@
+{
+    "name": "connect4-server",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+      "start": "node index.js",
+      "dev": "NODE_ENV=development nodemon index.js",
+      "test": "node ./node_modules/jest/bin/jest.js --runInBand"
+    },
+    "dependencies": {
+      "express": "^4.18.2",
+      "socket.io": "^4.8.1",
+      "cors": "^2.8.5",
+      "uuid": "^9.0.0"
+    },
+    "devDependencies": {
+      "jest": "^29.6.1",
+      "nodemon": "^2.0.22"
+    }
+  }
+  
